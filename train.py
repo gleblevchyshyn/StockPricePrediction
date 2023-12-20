@@ -12,9 +12,6 @@ def create_sequences(data, seq_size=1):
         x[:, i] = data[i: len(data) - seq_size + i].reshape(-1)
 
     y = data[seq_size:]
-
-    print(x.shape)
-    print(y.shape)
     return x, y
 
 
@@ -36,16 +33,18 @@ scaled_val = min_max_scaler.transform(x_val)
 
 
 model = tf.keras.Sequential([
-    tf.keras.layers.LSTM(32, input_shape=(1, sequence_size), return_sequences=True),
+    tf.keras.layers.LSTM(64, input_shape=(sequence_size, 1), return_sequences=True),
+    tf.keras.layers.LSTM(32, return_sequences=True),
     tf.keras.layers.LSTM(16),
     tf.keras.layers.Dense(8, activation='elu', kernel_initializer='he_normal'),
+    tf.keras.layers.Dense(4, activation='elu', kernel_initializer='he_normal'),
     tf.keras.layers.Dense(1)
 ])
 
 model.compile(loss='mean_squared_error', optimizer='adam')
 
-early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', restore_best_weights=True, verbose=1)
-history = model.fit(scaled_train, y_train, validation_data=[scaled_val, y_val], verbose=1, epochs=100,
+early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', restore_best_weights=True, verbose=1, patience=5)
+history = model.fit(scaled_train, y_train, validation_data=[scaled_val, y_val], verbose=1, epochs=200,
                     callbacks=[early_stopping])
 
 pd.DataFrame(history.history).plot()
